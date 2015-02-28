@@ -1,6 +1,25 @@
-Warning: NOT FOR PRODUCTION USAGE.
-
-Thoughtworks Go plugin to poll Git repository. This is just a sample SCM plugin.
+Common module that all Go CD plugins to poll Git repository can use.
 
 *Usage:*
-Download jar from releases & place it in <go-server-location>/plugins/external & restart Go Server.
+Inside `git-cmd` project:
+```
+$ mvn clean install -DskipTests
+```
+
+Add Dependency (to plugin project):
+```
+<dependency>
+    <groupId>com.thoughtworks.go</groupId>
+    <artifactId>git-cmd</artifactId>
+    <version>0.1</version>
+</dependency>
+```
+
+Use:
+```
+GitHelper git = HelperFactory.git(gitConfig, new File(flyweightFolder));
+git.cloneOrFetch();
+...
+```
+
+`HelperFactory.git(gitConfig, new File(flyweightFolder));` detects & uses git if installed else falls back on jgit implementation.

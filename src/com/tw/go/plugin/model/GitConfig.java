@@ -1,5 +1,6 @@
 package com.tw.go.plugin.model;
 
+import com.tw.go.plugin.HelperFactory;
 import com.tw.go.plugin.util.StringUtil;
 import org.apache.commons.validator.routines.UrlValidator;
 
@@ -69,7 +70,6 @@ public class GitConfig {
 
     public void checkConnection(Map<String, Object> response, ArrayList<String> messages) {
         try {
-            URL urlObj = new URL(url);
             if (StringUtil.isEmpty(url)) {
                 response.put("status", "failure");
                 messages.add("URL is empty");
@@ -77,17 +77,12 @@ public class GitConfig {
                 if (!new File(url).exists()) {
                     response.put("status", "failure");
                     messages.add("Could not find Git repository");
+                } else {
+                    HelperFactory.git(this, null).checkConnection();
                 }
             } else {
-                URLConnection connection = urlObj.openConnection();
-                connection.connect();
+                HelperFactory.git(this, null).checkConnection();
             }
-        } catch (MalformedURLException e) {
-            response.put("status", "failure");
-            messages.add("Malformed URL");
-        } catch (IOException e) {
-            response.put("status", "failure");
-            messages.add("Could not connect to URL");
         } catch (Exception e) {
             response.put("status", "failure");
             messages.add(e.getMessage());
