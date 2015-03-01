@@ -6,18 +6,24 @@ import com.tw.go.plugin.cmd.ProcessOutputStreamConsumer;
 import com.tw.go.plugin.model.GitConfig;
 import com.tw.go.plugin.model.ModifiedFile;
 import com.tw.go.plugin.model.Revision;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.RawTextComparator;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.submodule.SubmoduleStatus;
 import org.eclipse.jgit.submodule.SubmoduleWalk;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 import java.io.File;
@@ -530,10 +536,52 @@ public class JGitHelper extends GitHelper {
 
     @Override
     public void removeSubmoduleSectionsFromGitConfig() {
+        List<String> submoduleFolders = submoduleFolders();
+
+        for (String submoduleFolder : submoduleFolders) {
+            configRemoveSection(submoduleFolder);
+        }
     }
 
     @Override
     public void submoduleRemove(String folderName) {
+        configRemoveSection(folderName);
+
+        Repository repository = null;
+        try {
+            repository = getRepository(workingDir);
+
+            StoredConfig gitSubmodulesConfig = new FileBasedConfig(null, new File(repository.getWorkTree(), Constants.DOT_GIT_MODULES), FS.DETECTED);
+            gitSubmodulesConfig.unsetSection(ConfigConstants.CONFIG_SUBMODULE_SECTION, folderName);
+            gitSubmodulesConfig.save();
+
+            Git git = Git.wrap(repository);
+            git.rm().setCached(true).addFilepattern(folderName).call();
+
+            FileUtils.deleteQuietly(new File(workingDir, folderName));
+        } catch (Exception e) {
+            throw new RuntimeException("sub-module remove failed", e);
+        } finally {
+            if (repository != null) {
+                repository.close();
+            }
+        }
+    }
+
+    private void configRemoveSection(String folderName) {
+        Repository repository = null;
+        try {
+            repository = getRepository(workingDir);
+            StoredConfig repositoryConfig = repository.getConfig();
+            repositoryConfig.unsetSection(ConfigConstants.CONFIG_SUBMODULE_SECTION, folderName);
+            repositoryConfig.save();
+        } catch (Exception e) {
+            throw new RuntimeException("sub-module section remove failed", e);
+        } finally {
+            if (repository != null) {
+                repository.close();
+            }
+        }
     }
 
     @Override
