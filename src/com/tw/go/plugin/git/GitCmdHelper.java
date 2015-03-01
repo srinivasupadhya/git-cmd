@@ -13,7 +13,6 @@ import org.apache.commons.exec.*;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -124,7 +123,7 @@ public class GitCmdHelper extends GitHelper {
 
             Matcher m = matchResultLine(resultLine);
             if (!m.find()) {
-                throw new RuntimeException(String.format("Unable to parse git-diff-tree output line: %s\nFrom output:\n %s", resultLine, diffTreeOutput));
+                throw new RuntimeException(String.format("Unable to parse git-diff-tree output line: %s\nFrom output:\n %s", resultLine, ListUtil.join(diffTreeOutput, "\n")));
             }
             revision.createModifiedFile(m.group(2), parseGitAction(m.group(1).charAt(0)));
         }
@@ -324,11 +323,13 @@ public class GitCmdHelper extends GitHelper {
     @Override
     public void submoduleRemove(String folderName) {
         configRemoveSection("submodule." + folderName);
+
         CommandLine gitConfig = Console.createCommand("config", "-f", ".gitmodules", "--remove-section", "submodule." + folderName);
         runOrBomb(gitConfig);
 
         CommandLine gitRm = Console.createCommand("rm", "--cached", folderName);
         runOrBomb(gitRm);
+
         FileUtils.deleteQuietly(new File(workingDir, folderName));
     }
 
