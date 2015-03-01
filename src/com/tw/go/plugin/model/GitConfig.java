@@ -1,16 +1,6 @@
 package com.tw.go.plugin.model;
 
-import com.tw.go.plugin.HelperFactory;
 import com.tw.go.plugin.util.StringUtil;
-import org.apache.commons.validator.routines.UrlValidator;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Map;
 
 public class GitConfig {
     private String url;
@@ -47,46 +37,6 @@ public class GitConfig {
 
     public boolean hasCredentials() {
         return !StringUtil.isEmpty(url) && !StringUtil.isEmpty(password);
-    }
-
-    public void validateUrl(Map<String, Object> fieldMap) {
-        if (StringUtil.isEmpty(url)) {
-            fieldMap.put("key", "url");
-            fieldMap.put("message", "URL is a required field");
-        } else {
-            if (url.startsWith("/")) {
-                if (!new File(url).exists()) {
-                    fieldMap.put("key", "url");
-                    fieldMap.put("message", "Invalid URL. Directory does not exist");
-                }
-            } else {
-                if (!new UrlValidator(UrlValidator.ALLOW_LOCAL_URLS).isValid(url)) {
-                    fieldMap.put("key", "url");
-                    fieldMap.put("message", "Invalid URL format");
-                }
-            }
-        }
-    }
-
-    public void checkConnection(Map<String, Object> response, ArrayList<String> messages) {
-        try {
-            if (StringUtil.isEmpty(url)) {
-                response.put("status", "failure");
-                messages.add("URL is empty");
-            } else if (url.startsWith("/")) {
-                if (!new File(url).exists()) {
-                    response.put("status", "failure");
-                    messages.add("Could not find Git repository");
-                } else {
-                    HelperFactory.git(this, null).checkConnection();
-                }
-            } else {
-                HelperFactory.git(this, null).checkConnection();
-            }
-        } catch (Exception e) {
-            response.put("status", "failure");
-            messages.add(e.getMessage());
-        }
     }
 
     public String getUrl() {
