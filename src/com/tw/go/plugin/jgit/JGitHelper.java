@@ -24,21 +24,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class JGitHelper implements GitHelper {
-    private GitConfig gitConfig;
-    private ProcessOutputStreamConsumer stdOut;
-    private ProcessOutputStreamConsumer stdErr;
-    private File workingDir;
-
+public class JGitHelper extends GitHelper {
     public JGitHelper(GitConfig gitConfig, File workingDir) {
         this(gitConfig, workingDir, new ProcessOutputStreamConsumer(new InMemoryConsumer()), new ProcessOutputStreamConsumer(new InMemoryConsumer()));
     }
 
     public JGitHelper(GitConfig gitConfig, File workingDir, ProcessOutputStreamConsumer stdOut, ProcessOutputStreamConsumer stdErr) {
-        this.gitConfig = gitConfig;
-        this.workingDir = workingDir;
-        this.stdOut = stdOut;
-        this.stdErr = stdErr;
+        super(gitConfig, workingDir, stdOut, stdErr);
     }
 
     @Override
@@ -58,21 +50,7 @@ public class JGitHelper implements GitHelper {
     }
 
     @Override
-    public void cloneOrFetch() {
-        if (!workingDir.exists() || !getGitDir(workingDir).exists()) {
-            cloneRepository();
-            resetHard("origin/" + gitConfig.getEffectiveBranch());
-            if (gitConfig.isRecursiveSubModuleUpdate()) {
-                updateSubmoduleWithInit();
-            }
-        } else {
-            fetchAndResetToHead();
-        }
-    }
-
-    @Override
     public void cloneRepository() {
-        // TODO: delete if exists
         workingDir.mkdirs();
 
         CloneCommand clone = Git.cloneRepository().setURI(gitConfig.getUrl()).setDirectory(workingDir).setBranch(gitConfig.getEffectiveBranch());
@@ -267,23 +245,6 @@ public class JGitHelper implements GitHelper {
     }
 
     @Override
-    public void fetchAndResetToHead() {
-        fetchAndReset("origin/" + gitConfig.getEffectiveBranch());
-    }
-
-    @Override
-    public void fetchAndReset(String revision) {
-        cleanAllUnversionedFiles();
-        fetch();
-        gc();
-        resetHard(revision);
-        if (gitConfig.isRecursiveSubModuleUpdate()) {
-            updateSubmoduleWithInit();
-        }
-        cleanAllUnversionedFiles();
-    }
-
-    @Override
     public void cleanAllUnversionedFiles() {
         Repository repository = null;
         try {
@@ -336,11 +297,6 @@ public class JGitHelper implements GitHelper {
                 repository.close();
             }
         }
-    }
-
-    @Override
-    public boolean isSubmoduleEnabled() {
-        return new File(workingDir, ".gitmodules").exists();
     }
 
     @Override
@@ -448,15 +404,6 @@ public class JGitHelper implements GitHelper {
             }
         }
         return count;
-    }
-
-    @Override
-    public void updateSubmoduleWithInit() {
-        submoduleInit();
-
-        submoduleSync();
-
-        submoduleUpdate();
     }
 
     @Override

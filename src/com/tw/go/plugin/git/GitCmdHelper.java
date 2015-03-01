@@ -18,25 +18,17 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GitCmdHelper implements GitHelper {
+public class GitCmdHelper extends GitHelper {
     private static final Pattern GIT_SUBMODULE_STATUS_PATTERN = Pattern.compile("^.[0-9a-fA-F]{40} (.+?)( \\(.+\\))?$");
     private static final Pattern GIT_SUBMODULE_URL_PATTERN = Pattern.compile("^submodule\\.(.+)\\.url (.+)$");
     private static final Pattern GIT_DIFF_TREE_PATTERN = Pattern.compile("^(.)\\s+(.+)$");
-
-    private GitConfig gitConfig;
-    private File workingDir;
-    private ProcessOutputStreamConsumer stdOut;
-    private ProcessOutputStreamConsumer stdErr;
 
     public GitCmdHelper(GitConfig gitConfig, File workingDir) {
         this(gitConfig, workingDir, new ProcessOutputStreamConsumer(new InMemoryConsumer()), new ProcessOutputStreamConsumer(new InMemoryConsumer()));
     }
 
     public GitCmdHelper(GitConfig gitConfig, File workingDir, ProcessOutputStreamConsumer stdOut, ProcessOutputStreamConsumer stdErr) {
-        this.gitConfig = gitConfig;
-        this.workingDir = workingDir;
-        this.stdOut = stdOut;
-        this.stdErr = stdErr;
+        super(gitConfig, workingDir, stdOut, stdErr);
     }
 
     @Override
@@ -49,19 +41,6 @@ public class GitCmdHelper implements GitHelper {
     public void checkConnection() {
         CommandLine gitCmd = Console.createCommand("ls-remote", gitConfig.getUrl());
         runAndGetOutput(gitCmd);
-    }
-
-    @Override
-    public void cloneOrFetch() {
-        if (!workingDir.exists()) {
-            cloneRepository();
-            resetHard("origin/" + gitConfig.getEffectiveBranch());
-            if (gitConfig.isRecursiveSubModuleUpdate()) {
-                updateSubmoduleWithInit();
-            }
-        } else {
-            fetchAndResetToHead();
-        }
     }
 
     @Override
@@ -204,28 +183,6 @@ public class GitCmdHelper implements GitHelper {
     }
 
     @Override
-    public void fetchAndResetToHead() {
-        fetchAndReset("origin/" + gitConfig.getEffectiveBranch());
-    }
-
-    @Override
-    public void fetchAndReset(String revision) {
-        stdOut.consumeLine(String.format("[GIT] Fetch and reset in working directory %s", workingDir));
-        cleanAllUnversionedFiles();
-        if (isSubmoduleEnabled()) {
-            removeSubmoduleSectionsFromGitConfig();
-        }
-        fetch();
-        gc();
-        resetHard(revision);
-        if (isSubmoduleEnabled()) {
-            checkoutAllModifiedFilesInSubmodules();
-            updateSubmoduleWithInit();
-        }
-        cleanAllUnversionedFiles();
-    }
-
-    @Override
     public void cleanAllUnversionedFiles() {
         stdOut.consumeLine("[GIT] Cleaning all unversioned files in working copy");
         if (isSubmoduleEnabled()) {
@@ -246,11 +203,6 @@ public class GitCmdHelper implements GitHelper {
         stdOut.consumeLine("[GIT] Performing git gc");
         CommandLine gitGc = Console.createCommand("gc", "--auto");
         runOrBomb(gitGc);
-    }
-
-    @Override
-    public boolean isSubmoduleEnabled() {
-        return new File(workingDir, ".gitmodules").exists();
     }
 
     @Override
@@ -304,20 +256,6 @@ public class GitCmdHelper implements GitHelper {
     public int getSubModuleCommitCount(String subModuleFolder) {
         CommandLine gitCmd = Console.createCommand("rev-list", "HEAD", "--count");
         return Integer.parseInt(runAndGetOutput(gitCmd, new File(workingDir, subModuleFolder)).stdOut().get(0));
-    }
-
-    @Override
-    public void updateSubmoduleWithInit() {
-        stdOut.consumeLine("[GIT] Updating git sub-modules");
-
-        submoduleInit();
-
-        submoduleSync();
-
-        submoduleUpdate();
-
-        stdOut.consumeLine("[GIT] Cleaning unversioned files and sub-modules");
-        printSubmoduleStatus();
     }
 
     @Override

@@ -1,86 +1,150 @@
 package com.tw.go.plugin;
 
+import com.tw.go.plugin.cmd.ProcessOutputStreamConsumer;
+import com.tw.go.plugin.model.GitConfig;
 import com.tw.go.plugin.model.Revision;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-public interface GitHelper {
-    public String version();
+public abstract class GitHelper {
+    protected GitConfig gitConfig;
+    protected File workingDir;
+    protected ProcessOutputStreamConsumer stdOut;
+    protected ProcessOutputStreamConsumer stdErr;
 
-    public void checkConnection();
+    public GitHelper(GitConfig gitConfig, File workingDir, ProcessOutputStreamConsumer stdOut, ProcessOutputStreamConsumer stdErr) {
+        this.gitConfig = gitConfig;
+        this.workingDir = workingDir;
+        this.stdOut = stdOut;
+        this.stdErr = stdErr;
+    }
 
-    public void cloneOrFetch();
+    public abstract String version();
 
-    public void cloneRepository();
+    public abstract void checkConnection();
 
-    public void checkoutRemoteBranchToLocal();
+    public void cloneOrFetch() {
+        if (!isGitRepository() || !isSameRepository()) {
+            FileUtils.deleteQuietly(workingDir);
+            cloneRepository();
+            resetHard("origin/" + gitConfig.getEffectiveBranch());
+            if (gitConfig.isRecursiveSubModuleUpdate()) {
+                updateSubmoduleWithInit();
+            }
+        } else {
+            fetchAndResetToHead();
+        }
+    }
 
-    public String workingRepositoryUrl();
+    private boolean isGitRepository() {
+        File dotGit = new File(workingDir, ".git");
+        return workingDir.exists() && dotGit.exists() && dotGit.isDirectory();
+    }
 
-    public String getCurrentBranch();
+    public boolean isSameRepository() {
+        return workingRepositoryUrl().equals(gitConfig.getUrl());
+    }
 
-    public int getCommitCount();
+    public abstract void cloneRepository();
 
-    public String currentRevision();
+    public abstract void checkoutRemoteBranchToLocal();
 
-    public List<Revision> getAllRevisions();
+    public abstract String workingRepositoryUrl();
 
-    public Revision getLatestRevision();
+    public abstract String getCurrentBranch();
 
-    public List<Revision> getRevisionsSince(String revision);
+    public abstract int getCommitCount();
 
-    public void pull();
+    public abstract String currentRevision();
 
-    public void fetch();
+    public abstract List<Revision> getAllRevisions();
 
-    public void resetHard(String revision);
+    public abstract Revision getLatestRevision();
 
-    public void fetchAndResetToHead();
+    public abstract List<Revision> getRevisionsSince(String revision);
 
-    public void fetchAndReset(String revision);
+    public abstract void pull();
 
-    public void cleanAllUnversionedFiles();
+    public abstract void fetch();
 
-    public void gc();
+    public abstract void resetHard(String revision);
 
-    public boolean isSubmoduleEnabled();
+    public void fetchAndResetToHead() {
+        fetchAndReset("origin/" + gitConfig.getEffectiveBranch());
+    }
 
-    public Map<String, String> submoduleUrls();
+    public void fetchAndReset(String revision) {
+        stdOut.consumeLine(String.format("[GIT] Fetch and reset in working directory %s", workingDir));
+        cleanAllUnversionedFiles();
+        if (isSubmoduleEnabled()) {
+            removeSubmoduleSectionsFromGitConfig();
+        }
+        fetch();
+        gc();
+        resetHard(revision);
+        if (isSubmoduleEnabled()) {
+            checkoutAllModifiedFilesInSubmodules();
+            updateSubmoduleWithInit();
+        }
+        cleanAllUnversionedFiles();
+    }
 
-    public List<String> submoduleFolders();
+    public abstract void cleanAllUnversionedFiles();
 
-    public void printSubmoduleStatus();
+    public abstract void gc();
 
-    public void checkoutAllModifiedFilesInSubmodules();
+    public boolean isSubmoduleEnabled() {
+        return new File(workingDir, ".gitmodules").exists();
+    }
 
-    public int getSubModuleCommitCount(String subModuleFolder);
+    public abstract Map<String, String> submoduleUrls();
 
-    public void updateSubmoduleWithInit();
+    public abstract List<String> submoduleFolders();
 
-    public void submoduleInit();
+    public abstract void printSubmoduleStatus();
 
-    public void submoduleSync();
+    public abstract void checkoutAllModifiedFilesInSubmodules();
 
-    public void submoduleUpdate();
+    public abstract int getSubModuleCommitCount(String subModuleFolder);
 
-    public void init();
+    public void updateSubmoduleWithInit() {
+        stdOut.consumeLine("[GIT] Updating git sub-modules");
 
-    public void add(File fileToAdd);
+        submoduleInit();
 
-    public void commit(String message);
+        submoduleSync();
 
-    public void commitOnDate(String message, Date commitDate);
+        submoduleUpdate();
 
-    public void submoduleAdd(String repoUrl, String submoduleNameToPutInGitSubmodules, String folder);
+        stdOut.consumeLine("[GIT] Cleaning unversioned files and sub-modules");
+        printSubmoduleStatus();
+    }
 
-    public void removeSubmoduleSectionsFromGitConfig();
+    public abstract void submoduleInit();
 
-    public void submoduleRemove(String folderName);
+    public abstract void submoduleSync();
 
-    public void changeSubmoduleUrl(String submoduleName, String newUrl);
+    public abstract void submoduleUpdate();
 
-    public void push();
+    public abstract void init();
+
+    public abstract void add(File fileToAdd);
+
+    public abstract void commit(String message);
+
+    public abstract void commitOnDate(String message, Date commitDate);
+
+    public abstract void submoduleAdd(String repoUrl, String submoduleNameToPutInGitSubmodules, String folder);
+
+    public abstract void removeSubmoduleSectionsFromGitConfig();
+
+    public abstract void submoduleRemove(String folderName);
+
+    public abstract void changeSubmoduleUrl(String submoduleName, String newUrl);
+
+    public abstract void push();
 }
