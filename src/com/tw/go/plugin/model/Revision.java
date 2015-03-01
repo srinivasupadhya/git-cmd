@@ -17,9 +17,9 @@ public class Revision {
         this.revision = revision;
     }
 
-    public Revision(String revision, int timestamp, String comment, String user, List<ModifiedFile> modifiedFiles) {
+    public Revision(String revision, Date timestamp, String comment, String user, List<ModifiedFile> modifiedFiles) {
         this.revision = revision;
-        this.timestamp = new Date(timestamp);
+        this.timestamp = timestamp;
         this.comment = comment;
         this.user = user;
         this.modifiedFiles = modifiedFiles;

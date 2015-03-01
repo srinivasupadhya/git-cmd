@@ -594,7 +594,7 @@ public class JGitHelper extends GitHelper {
 
     private Revision getRevisionObj(Repository repository, RevCommit commit) throws IOException {
         String commitSHA = commit.getName();
-        int commitTime = commit.getCommitTime();
+        Date commitTime = commit.getAuthorIdent().getWhen();
         String comment = commit.getFullMessage().trim();
         String user = commit.getAuthorIdent().getEmailAddress();
         List<ModifiedFile> modifiedFiles = new ArrayList<ModifiedFile>();

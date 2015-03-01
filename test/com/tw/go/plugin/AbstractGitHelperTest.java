@@ -90,7 +90,7 @@ public abstract class AbstractGitHelperTest {
 
         Revision revision = git.getLatestRevision();
 
-        verifyRevision(revision, "012e893acea10b140688d11beaa728e8c60bd9f6", "1", asList(new Pair("a.txt", "added")));
+        verifyRevision(revision, "012e893acea10b140688d11beaa728e8c60bd9f6", "1", 1422184635000L, asList(new Pair("a.txt", "added")));
 
         // Fetch & Get LatestRevisionsSince
         FileUtils.deleteQuietly(simpleGitRepository.getAbsoluteFile());
@@ -104,8 +104,8 @@ public abstract class AbstractGitHelperTest {
         List<Revision> newerRevisions = git.getRevisionsSince("012e893acea10b140688d11beaa728e8c60bd9f6");
 
         assertThat(newerRevisions.size(), is(2));
-        verifyRevision(newerRevisions.get(0), "24ce45d1a1427b643ae859777417bbc9f0d7cec8", "3\ntest multiline\ncomment", asList(new Pair("a.txt", "modified"), new Pair("b.txt", "added")));
-        verifyRevision(newerRevisions.get(1), "1320a78055558603a2c29d803bbaa50d3542ff50", "2", asList(new Pair("a.txt", "modified")));
+        verifyRevision(newerRevisions.get(0), "24ce45d1a1427b643ae859777417bbc9f0d7cec8", "3\ntest multiline\ncomment", 1422189618000L, asList(new Pair("a.txt", "modified"), new Pair("b.txt", "added")));
+        verifyRevision(newerRevisions.get(1), "1320a78055558603a2c29d803bbaa50d3542ff50", "2", 1422189545000L, asList(new Pair("a.txt", "modified")));
 
         // poll again
         git.cloneOrFetch();
@@ -178,7 +178,7 @@ public abstract class AbstractGitHelperTest {
 
         Revision revision = git.getLatestRevision();
 
-        verifyRevision(revision, "24ce45d1a1427b643ae859777417bbc9f0d7cec8", "3\ntest multiline\ncomment", asList(new Pair("a.txt", "added"), new Pair("b.txt", "added")));
+        verifyRevision(revision, "24ce45d1a1427b643ae859777417bbc9f0d7cec8", "3\ntest multiline\ncomment", 1422189618000L, asList(new Pair("a.txt", "added"), new Pair("b.txt", "added")));
 
         // poll again
         git.cloneOrFetch();
@@ -269,8 +269,9 @@ public abstract class AbstractGitHelperTest {
         bufferedOutputStream.close();
     }
 
-    private void verifyRevision(Revision revision, String sha, String comment, List<Pair> files) {
+    private void verifyRevision(Revision revision, String sha, String comment, long timestamp, List<Pair> files) {
         assertThat(revision.getRevision(), is(sha));
+        assertThat(revision.getTimestamp().getTime(), is(timestamp));
         assertThat(revision.getComment(), is(comment));
         assertThat(revision.getModifiedFiles().size(), is(files.size()));
         for (int i = 0; i < files.size(); i++) {

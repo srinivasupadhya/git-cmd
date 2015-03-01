@@ -32,7 +32,7 @@ public class GitModificationParser {
     public void processLine(String line) {
         Matcher matcher = COMMIT_PATTERN.matcher(line);
         if (matcher.matches()) {
-            revisions.add(new Revision(matcher.group(1), 0, "", "", null));
+            revisions.add(new Revision(matcher.group(1), null, "", "", null));
         }
         Matcher authorMatcher = AUTHOR_PATTERN.matcher(line);
         if (authorMatcher.matches()) {
