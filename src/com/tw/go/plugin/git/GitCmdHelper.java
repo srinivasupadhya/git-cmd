@@ -38,21 +38,21 @@ public class GitCmdHelper extends GitHelper {
 
     @Override
     public void checkConnection() {
-        CommandLine gitCmd = Console.createCommand("ls-remote", gitConfig.getUrl());
+        List<String> args = new ArrayList<String>(Arrays.asList("ls-remote"));
+        args.add(gitConfig.getEffectiveUrl());
+        CommandLine gitCmd = Console.createCommand(ListUtil.toArray(args));
         runAndGetOutput(gitCmd);
     }
 
     @Override
     public void cloneRepository() {
-        List<String> args = new ArrayList<String>();
-        args.add("clone");
-        args.add(String.format("--branch=%s", gitConfig.getEffectiveBranch()));
+        List<String> args = new ArrayList<String>(Arrays.asList("clone", String.format("--branch=%s", gitConfig.getEffectiveBranch())));
         if (gitConfig.isShallowClone()) {
             args.add("--depth=1");
         }
-        args.add(gitConfig.getUrl());
+        args.add(gitConfig.getEffectiveUrl());
         args.add(workingDir.getAbsolutePath());
-        CommandLine gitClone = Console.createCommand(args.toArray(new String[args.size()]));
+        CommandLine gitClone = Console.createCommand(ListUtil.toArray(args));
         Console.runOrBomb(gitClone, null, stdOut, stdErr);
     }
 

@@ -32,11 +32,23 @@ public class GitConfig {
     }
 
     public boolean isRemoteUrl() {
-        return url.startsWith("http") || url.startsWith("https");
+        return url.startsWith("http://") || url.startsWith("https://");
     }
 
     public boolean hasCredentials() {
         return !StringUtil.isEmpty(url) && !StringUtil.isEmpty(password);
+    }
+
+    public String getEffectiveUrl() {
+        if (isRemoteUrl() && hasCredentials()) {
+            return getUrlWithCredentials();
+        }
+        return getUrl();
+    }
+
+    public String getUrlWithCredentials() {
+        String[] parts = url.split("://");
+        return String.format("%s://%s:%s@%s", parts[0], username, password, parts[1]);
     }
 
     public String getUrl() {

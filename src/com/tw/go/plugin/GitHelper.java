@@ -47,7 +47,7 @@ public abstract class GitHelper {
     }
 
     public boolean isSameRepository() {
-        return workingRepositoryUrl().equals(gitConfig.getUrl());
+        return workingRepositoryUrl().equals(gitConfig.getEffectiveUrl());
     }
 
     private void setupWorkingDir() {

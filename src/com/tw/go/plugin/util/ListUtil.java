@@ -23,4 +23,8 @@ public class ListUtil {
         }
         return sb.toString();
     }
+
+    public static String[] toArray(List<String> args) {
+        return args.toArray(new String[args.size()]);
+    }
 }
