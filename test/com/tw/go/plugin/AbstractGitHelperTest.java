@@ -25,10 +25,10 @@ import static org.junit.Assert.fail;
 public abstract class AbstractGitHelperTest {
     private static final int BUFFER_SIZE = 4096;
 
-    protected File testRepository = new File("/tmp", UUID.randomUUID().toString());
-    protected File simpleGitRepository = new File("/tmp", "simple-git-repository");
-    protected File subModuleGitRepository = new File("/tmp", "sub-module-git-repository");
-    protected File branchGitRepository = new File("/tmp", "branch-git-repository");
+    protected File testRepository = new File(System.getProperty("java.io.tmpdir"), UUID.randomUUID().toString());
+    protected File simpleGitRepository = new File(System.getProperty("java.io.tmpdir"), "simple-git-repository");
+    protected File subModuleGitRepository = new File(System.getProperty("java.io.tmpdir"), "sub-module-git-repository");
+    protected File branchGitRepository = new File(System.getProperty("java.io.tmpdir"), "branch-git-repository");
 
     @Before
     public void setUp() {
@@ -66,7 +66,7 @@ public abstract class AbstractGitHelperTest {
             fail("check connection failed for a valid repository");
         }
 
-        GitHelper gitInValidRepository = getHelper(new GitConfig(new File("/tmp", "non-existing-repository").getAbsolutePath()), null);
+        GitHelper gitInValidRepository = getHelper(new GitConfig(new File(System.getProperty("java.io.tmpdir"), "non-existing-repository").getAbsolutePath()), null);
         try {
             gitInValidRepository.checkConnection();
             fail("check connection failed for a valid repository");
@@ -228,11 +228,11 @@ public abstract class AbstractGitHelperTest {
     }
 
     protected void extractToTmp(String zipResourcePath) throws IOException {
-        File zipFile = new File("/tmp", UUID.randomUUID().toString() + ".zip");
+        File zipFile = new File(System.getProperty("java.io.tmpdir"), UUID.randomUUID().toString() + ".zip");
 
         IOUtils.copy(getClass().getResourceAsStream(zipResourcePath), new FileOutputStream(zipFile));
 
-        unzip(zipFile.getAbsolutePath(), "/tmp");
+        unzip(zipFile.getAbsolutePath(), System.getProperty("java.io.tmpdir"));
 
         FileUtils.deleteQuietly(zipFile);
     }
