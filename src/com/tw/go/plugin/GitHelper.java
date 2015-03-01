@@ -6,6 +6,7 @@ import com.tw.go.plugin.model.Revision;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,7 @@ public abstract class GitHelper {
 
     public void cloneOrFetch() {
         if (!isGitRepository() || !isSameRepository()) {
-            FileUtils.deleteQuietly(workingDir);
+            setupWorkingDir();
             cloneRepository();
             resetHard("origin/" + gitConfig.getEffectiveBranch());
             if (gitConfig.isRecursiveSubModuleUpdate()) {
@@ -47,6 +48,15 @@ public abstract class GitHelper {
 
     public boolean isSameRepository() {
         return workingRepositoryUrl().equals(gitConfig.getUrl());
+    }
+
+    private void setupWorkingDir() {
+        FileUtils.deleteQuietly(workingDir);
+        try {
+            FileUtils.forceMkdir(workingDir);
+        } catch (IOException e) {
+            new RuntimeException("Could not create directory: " + workingDir.getAbsolutePath());
+        }
     }
 
     public abstract void cloneRepository();

@@ -51,8 +51,6 @@ public class JGitHelper extends GitHelper {
 
     @Override
     public void cloneRepository() {
-        workingDir.mkdirs();
-
         CloneCommand clone = Git.cloneRepository().setURI(gitConfig.getUrl()).setDirectory(workingDir).setBranch(gitConfig.getEffectiveBranch());
         if (gitConfig.isRecursiveSubModuleUpdate()) {
             clone.setCloneSubmodules(true);

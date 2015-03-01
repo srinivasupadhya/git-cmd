@@ -45,11 +45,6 @@ public class GitCmdHelper extends GitHelper {
 
     @Override
     public void cloneRepository() {
-        try {
-            FileUtils.forceMkdir(workingDir);
-        } catch (IOException e) {
-            new RuntimeException("Could not create directory: " + workingDir.getAbsolutePath());
-        }
         List<String> args = new ArrayList<String>();
         args.add("clone");
         args.add(String.format("--branch=%s", gitConfig.getEffectiveBranch()));
