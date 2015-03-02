@@ -8,27 +8,24 @@ public class GitConfig {
     private String password;
     private String branch;
     private boolean subModule = false;
-    private boolean recursiveSubModuleUpdate = false;
+    private boolean recursiveSubModuleUpdate = true;
     private boolean shallowClone = false;
 
     public GitConfig(String url) {
         this.url = url;
     }
 
-    public GitConfig(String url, String branch, boolean recursiveSubModuleUpdate, boolean shallowClone) {
-        this.url = url;
-        this.branch = branch;
-        this.recursiveSubModuleUpdate = recursiveSubModuleUpdate;
-        this.shallowClone = shallowClone;
+    public GitConfig(String url, String username, String password, String branch) {
+        this(url, username, password, branch, true, false);
     }
 
-    public GitConfig(String url, String username, String password, String branch, String recursiveSubModuleUpdate, String shallowClone) {
+    public GitConfig(String url, String username, String password, String branch, boolean recursiveSubModuleUpdate, boolean shallowClone) {
         this.url = url;
         this.username = username;
         this.password = password;
         this.branch = branch;
-        this.recursiveSubModuleUpdate = StringUtil.isEmpty(recursiveSubModuleUpdate) ? false : Boolean.parseBoolean(recursiveSubModuleUpdate);
-        this.shallowClone = StringUtil.isEmpty(shallowClone) ? false : Boolean.parseBoolean(shallowClone);
+        this.recursiveSubModuleUpdate = recursiveSubModuleUpdate;
+        this.shallowClone = shallowClone;
     }
 
     public boolean isRemoteUrl() {

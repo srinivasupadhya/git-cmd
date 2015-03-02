@@ -119,7 +119,7 @@ public abstract class AbstractGitHelperTest {
     public void shouldCheckoutBranch() throws Exception {
         extractToTmp("/sample-repository/branch-git-repository.zip");
 
-        GitHelper git = getHelper(new GitConfig(branchGitRepository.getAbsolutePath(), "feature-branch", false, false), testRepository);
+        GitHelper git = getHelper(new GitConfig(branchGitRepository.getAbsolutePath(), null, null, "feature-branch"), testRepository);
         git.cloneOrFetch();
 
         assertThat(git.getCurrentBranch(), is("feature-branch"));
@@ -137,7 +137,7 @@ public abstract class AbstractGitHelperTest {
         gitRemote.submoduleAdd(subModuleGitRepository.getAbsolutePath(), "sub-module", "sub-module");
         gitRemote.commit("add sub-module");
 
-        GitConfig gitConfig = new GitConfig(simpleGitRepository.getAbsolutePath(), "master", true, false);
+        GitConfig gitConfig = new GitConfig(simpleGitRepository.getAbsolutePath(), null, null, "master", true, false);
         GitHelper gitMain = getHelper(gitConfig, testRepository);
         gitMain.cloneOrFetch();
 
@@ -171,7 +171,7 @@ public abstract class AbstractGitHelperTest {
     public void shouldShallowClone() throws Exception {
         extractToTmp("/sample-repository/simple-git-repository-2.zip");
 
-        GitHelper git = getHelper(new GitConfig("file://" + simpleGitRepository.getAbsolutePath(), "master", false, true), testRepository);
+        GitHelper git = getHelper(new GitConfig("file://" + simpleGitRepository.getAbsolutePath(), null, null, "master", false, true), testRepository);
         git.cloneOrFetch();
 
         assertThat(git.getCommitCount(), is(1));
