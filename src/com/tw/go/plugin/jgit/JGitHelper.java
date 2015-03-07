@@ -11,10 +11,7 @@ import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.RawTextComparator;
-import org.eclipse.jgit.lib.ConfigConstants;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
@@ -202,6 +199,30 @@ public class JGitHelper extends GitHelper {
             return revisionObjs;
         } catch (Exception e) {
             throw new RuntimeException("get newer revisions failed", e);
+        } finally {
+            if (repository != null) {
+                repository.close();
+            }
+        }
+    }
+
+    @Override
+    public Map<String, String> getBranchToRevisionMap() {
+        Repository repository = null;
+        try {
+            repository = getRepository(workingDir);
+            Git git = new Git(repository);
+            ListBranchCommand listBranch = git.branchList().setListMode(ListBranchCommand.ListMode.REMOTE);
+            List<Ref> refs = listBranch.call();
+            Map<String, String> branchToRevisionMap = new HashMap<String, String>();
+            for (Ref ref : refs) {
+                String branch = ref.getName().replace("refs/remotes/origin/", "");
+                String revision = ref.getObjectId().getName();
+                branchToRevisionMap.put(branch, revision);
+            }
+            return branchToRevisionMap;
+        } catch (Exception e) {
+            throw new RuntimeException("fetch failed", e);
         } finally {
             if (repository != null) {
                 repository.close();

@@ -101,6 +101,22 @@ public class GitCmdHelper extends GitHelper {
         return gitLog("log", String.format("%s..", revision), "--date=iso", "--pretty=medium");
     }
 
+    @Override
+    public Map<String, String> getBranchToRevisionMap() {
+        CommandLine gitCmd = Console.createCommand("show-ref");
+        List<String> outputLines = runAndGetOutput(gitCmd, workingDir).stdOut();
+        Map<String, String> branchToRevisionMap = new HashMap<String, String>();
+        for (String line : outputLines) {
+            if (line.contains("refs/remotes/origin/") && !line.contains("refs/remotes/origin/HEAD")) {
+                String[] parts = line.split(" ");
+                String branch = parts[1].replace("refs/remotes/origin/", "");
+                String revision = parts[0];
+                branchToRevisionMap.put(branch, revision);
+            }
+        }
+        return branchToRevisionMap;
+    }
+
     private List<Revision> gitLog(String... args) {
         CommandLine gitLog = Console.createCommand(args);
         List<String> gitLogOutput = runAndGetOutput(gitLog).stdOut();

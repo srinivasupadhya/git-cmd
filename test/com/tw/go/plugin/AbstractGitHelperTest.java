@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.io.*;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -126,6 +127,19 @@ public abstract class AbstractGitHelperTest {
         assertThat(git.getCommitCount(), is(2));
         assertThat(new File(testRepository, "a.txt").exists(), is(true));
         assertThat(new File(testRepository, "b.txt").exists(), is(true));
+    }
+
+    @Test
+    public void shouldGetBranchToRevisionMap() throws Exception {
+        extractToTmp("/sample-repository/branch-git-repository.zip");
+
+        GitHelper git = getHelper(new GitConfig(branchGitRepository.getAbsolutePath(), null, null, null), testRepository);
+        git.cloneOrFetch();
+
+        Map<String, String> branchToRevisionMap = git.getBranchToRevisionMap();
+        assertThat(branchToRevisionMap.size(), is(2));
+        assertThat(branchToRevisionMap.get("master"), is("012e893acea10b140688d11beaa728e8c60bd9f6"));
+        assertThat(branchToRevisionMap.get("feature-branch"), is("765e24764ee4f6fc10e4301b4f9528c08ff178d4"));
     }
 
     @Test

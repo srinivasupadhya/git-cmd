@@ -77,6 +77,8 @@ public abstract class GitHelper {
 
     public abstract List<Revision> getRevisionsSince(String revision);
 
+    public abstract Map<String, String> getBranchToRevisionMap();
+
     public abstract void pull();
 
     public abstract void fetch();
