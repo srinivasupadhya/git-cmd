@@ -77,6 +77,21 @@ public abstract class AbstractGitHelperTest {
     }
 
     @Test
+    public void shouldGetRevisionForRepository() throws Exception {
+        extractToTmp("/sample-repository/simple-git-repository-1.zip");
+
+        GitHelper git = getHelper(new GitConfig(simpleGitRepository.getAbsolutePath()), testRepository);
+        git.cloneOrFetch();
+
+        assertThat(git.workingRepositoryUrl(), is(simpleGitRepository.getAbsolutePath()));
+        assertThat(git.getCommitCount(), is(1));
+        assertThat(git.currentRevision(), is("012e893acea10b140688d11beaa728e8c60bd9f6"));
+
+        Revision revision = git.getDetailsForRevision("012e893acea10b140688d11beaa728e8c60bd9f6");
+        verifyRevision(revision, "012e893acea10b140688d11beaa728e8c60bd9f6", "1", 1422184635000L, asList(new Pair("a.txt", "added")));
+    }
+
+    @Test
     public void shouldPollRepository() throws Exception {
         // Checkout & Get LatestRevision
         extractToTmp("/sample-repository/simple-git-repository-1.zip");
@@ -84,10 +99,8 @@ public abstract class AbstractGitHelperTest {
         GitHelper git = getHelper(new GitConfig(simpleGitRepository.getAbsolutePath()), testRepository);
         git.cloneOrFetch();
 
-        assertThat(git.workingRepositoryUrl(), is(simpleGitRepository.getAbsolutePath()));
         assertThat(git.getCurrentBranch(), is("master"));
         assertThat(git.getCommitCount(), is(1));
-        assertThat(git.currentRevision(), is("012e893acea10b140688d11beaa728e8c60bd9f6"));
 
         Revision revision = git.getLatestRevision();
 
@@ -158,6 +171,8 @@ public abstract class AbstractGitHelperTest {
         assertThat(gitMain.getCommitCount(), is(2));
 
         assertThat(gitMain.getSubModuleCommitCount("sub-module"), is(2));
+
+        // TODO: add commit to sub-module & main-repo
 
         // poll again
         gitMain.cloneOrFetch();

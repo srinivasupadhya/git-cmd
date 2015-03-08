@@ -102,6 +102,11 @@ public class GitCmdHelper extends GitHelper {
     }
 
     @Override
+    public Revision getDetailsForRevision(String sha) {
+        return gitLog("log", "-1", sha, "--date=iso", "--pretty=medium").get(0);
+    }
+
+    @Override
     public Map<String, String> getBranchToRevisionMap() {
         CommandLine gitCmd = Console.createCommand("show-ref");
         List<String> outputLines = runAndGetOutput(gitCmd, workingDir).stdOut();

@@ -107,7 +107,8 @@ public class JGitHelper extends GitHelper {
         try {
             repository = getRepository(workingDir);
             Git git = new Git(repository);
-            Iterable<RevCommit> log = git.log().call();
+            LogCommand logCmd = git.log();
+            Iterable<RevCommit> log = logCmd.call();
             for (RevCommit commit : log) {
                 count++;
             }
@@ -132,14 +133,13 @@ public class JGitHelper extends GitHelper {
         try {
             repository = getRepository(workingDir);
             Git git = new Git(repository);
-            Iterable<RevCommit> log = git.log().call();
+            LogCommand logCmd = git.log();
+            Iterable<RevCommit> log = logCmd.call();
             List<Revision> revisionObjs = new ArrayList<Revision>();
-
             for (RevCommit commit : log) {
                 Revision revisionObj = getRevisionObj(repository, commit);
                 revisionObjs.add(revisionObj);
             }
-
             return revisionObjs;
         } catch (Exception e) {
             throw new RuntimeException("get all revisions failed", e);
@@ -156,7 +156,8 @@ public class JGitHelper extends GitHelper {
         try {
             repository = getRepository(workingDir);
             Git git = new Git(repository);
-            Iterable<RevCommit> log = git.log().call();
+            LogCommand logCmd = git.log().setMaxCount(1);
+            Iterable<RevCommit> log = logCmd.call();
             Iterator<RevCommit> iterator = log.iterator();
             if (iterator.hasNext()) {
                 return getRevisionObj(repository, iterator.next());
@@ -177,9 +178,9 @@ public class JGitHelper extends GitHelper {
         try {
             repository = getRepository(workingDir);
             Git git = new Git(repository);
-            Iterable<RevCommit> log = git.log().call();
+            LogCommand logCmd = git.log();
+            Iterable<RevCommit> log = logCmd.call();
             List<RevCommit> newCommits = new ArrayList<RevCommit>();
-
             for (RevCommit commit : log) {
                 if (commit.getName().equals(previousRevision)) {
                     break;
@@ -188,17 +189,38 @@ public class JGitHelper extends GitHelper {
             }
 
             List<Revision> revisionObjs = new ArrayList<Revision>();
-
             if (!newCommits.isEmpty()) {
                 for (RevCommit newCommit : newCommits) {
                     Revision revisionObj = getRevisionObj(repository, newCommit);
                     revisionObjs.add(revisionObj);
                 }
             }
-
             return revisionObjs;
         } catch (Exception e) {
             throw new RuntimeException("get newer revisions failed", e);
+        } finally {
+            if (repository != null) {
+                repository.close();
+            }
+        }
+    }
+
+    @Override
+    public Revision getDetailsForRevision(String sha) {
+        Repository repository = null;
+        try {
+            repository = getRepository(workingDir);
+            Git git = new Git(repository);
+            LogCommand logCmd = git.log();
+            Iterable<RevCommit> log = logCmd.call();
+            for (RevCommit commit : log) {
+                if (commit.getName().equals(sha)) {
+                    return getRevisionObj(repository, commit);
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            throw new RuntimeException("get latest revision failed", e);
         } finally {
             if (repository != null) {
                 repository.close();
@@ -617,7 +639,8 @@ public class JGitHelper extends GitHelper {
         String commitSHA = commit.getName();
         Date commitTime = commit.getAuthorIdent().getWhen();
         String comment = commit.getFullMessage().trim();
-        String user = commit.getAuthorIdent().getEmailAddress();
+        String user = commit.getAuthorIdent().getName();
+        String emailId = commit.getAuthorIdent().getEmailAddress();
         List<ModifiedFile> modifiedFiles = new ArrayList<ModifiedFile>();
         if (commit.getParentCount() == 0) {
             TreeWalk treeWalk = new TreeWalk(repository);
@@ -639,7 +662,7 @@ public class JGitHelper extends GitHelper {
             }
         }
 
-        return new Revision(commitSHA, commitTime, comment, user, modifiedFiles);
+        return new Revision(commitSHA, commitTime, comment, user, emailId, modifiedFiles);
     }
 
     private String getAction(String gitAction) {

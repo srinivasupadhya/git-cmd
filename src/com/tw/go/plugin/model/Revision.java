@@ -11,17 +11,19 @@ public class Revision {
     private Date timestamp;
     private String comment;
     private String user;
+    private String emailId;
     private List<ModifiedFile> modifiedFiles;
 
     public Revision(String revision) {
         this.revision = revision;
     }
 
-    public Revision(String revision, Date timestamp, String comment, String user, List<ModifiedFile> modifiedFiles) {
+    public Revision(String revision, Date timestamp, String comment, String user, String emailId, List<ModifiedFile> modifiedFiles) {
         this.revision = revision;
         this.timestamp = timestamp;
         this.comment = comment;
         this.user = user;
+        this.emailId = emailId;
         this.modifiedFiles = modifiedFiles;
     }
 
@@ -57,23 +59,20 @@ public class Revision {
         this.user = user;
     }
 
+    public String getEmailId() {
+        return emailId;
+    }
+
+    public void setEmailId(String emailId) {
+        this.emailId = emailId;
+    }
+
     public List<ModifiedFile> getModifiedFiles() {
         return modifiedFiles;
     }
 
     public void setModifiedFiles(List<ModifiedFile> modifiedFiles) {
         this.modifiedFiles = modifiedFiles;
-    }
-
-    @Override
-    public String toString() {
-        return "Revision{" +
-                "revision='" + revision + '\'' +
-                ", timestamp=" + timestamp +
-                ", comment='" + comment + '\'' +
-                ", user='" + user + '\'' +
-                ", modifiedFiles=" + modifiedFiles +
-                '}';
     }
 
     public final ModifiedFile createModifiedFile(String filename, String action) {
