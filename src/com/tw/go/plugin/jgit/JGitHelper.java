@@ -213,7 +213,7 @@ public class JGitHelper extends GitHelper {
         try {
             repository = getRepository(workingDir);
             Git git = new Git(repository);
-            LogCommand logCmd = git.log();
+            LogCommand logCmd = git.log().all();
             Iterable<RevCommit> log = logCmd.call();
             for (RevCommit commit : log) {
                 if (commit.getName().equals(sha)) {

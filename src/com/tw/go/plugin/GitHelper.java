@@ -79,6 +79,10 @@ public abstract class GitHelper {
 
     public abstract Revision getDetailsForRevision(String sha);
 
+    public Map<String, String> getBranchToRevisionMap() {
+        return getBranchToRevisionMap("refs/remotes/origin/");
+    }
+
     public abstract Map<String, String> getBranchToRevisionMap(String pattern);
 
     public abstract void pull();

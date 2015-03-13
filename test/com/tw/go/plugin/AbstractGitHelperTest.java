@@ -150,7 +150,7 @@ public abstract class AbstractGitHelperTest {
         GitHelper git = getHelper(new GitConfig(branchGitRepository.getAbsolutePath(), null, null, null), testRepository);
         git.cloneOrFetch();
 
-        Map<String, String> branchToRevisionMap = git.getBranchToRevisionMap("refs/remotes/origin/");
+        Map<String, String> branchToRevisionMap = git.getBranchToRevisionMap();
 
         assertThat(branchToRevisionMap.size(), is(2));
         assertThat(branchToRevisionMap.get("master"), is("012e893acea10b140688d11beaa728e8c60bd9f6"));
