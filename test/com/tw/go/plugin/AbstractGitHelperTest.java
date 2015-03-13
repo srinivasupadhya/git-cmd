@@ -6,6 +6,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.*;
@@ -149,7 +150,8 @@ public abstract class AbstractGitHelperTest {
         GitHelper git = getHelper(new GitConfig(branchGitRepository.getAbsolutePath(), null, null, null), testRepository);
         git.cloneOrFetch();
 
-        Map<String, String> branchToRevisionMap = git.getBranchToRevisionMap();
+        Map<String, String> branchToRevisionMap = git.getBranchToRevisionMap("refs/remotes/origin/");
+
         assertThat(branchToRevisionMap.size(), is(2));
         assertThat(branchToRevisionMap.get("master"), is("012e893acea10b140688d11beaa728e8c60bd9f6"));
         assertThat(branchToRevisionMap.get("feature-branch"), is("765e24764ee4f6fc10e4301b4f9528c08ff178d4"));
@@ -254,6 +256,18 @@ public abstract class AbstractGitHelperTest {
         assertThat(revision.getModifiedFiles().size(), is(1));
         assertThat(revision.getModifiedFiles().get(0).getFileName(), is("a.txt"));
         assertThat(revision.getModifiedFiles().get(0).getAction(), is("added"));
+    }
+
+    @Ignore
+    @Test
+    public void shouldWorkWithGithubRepository() {
+        GitHelper git = getHelper(new GitConfig("https://github.com/mdaliejaz/samplerepo.git"), testRepository);
+        git.cloneOrFetch("+refs/pull/*/merge:refs/gh-merge/remotes/origin/*");
+
+        Map<String, String> branchToRevisionMap = git.getBranchToRevisionMap("refs/gh-merge/remotes/origin/");
+
+        assertThat(branchToRevisionMap.size(), is(1));
+        assertThat(branchToRevisionMap.get("1"), is("aabd0f242bd40bfaaa4ce359123b2a2d976077d1"));
     }
 
     protected void extractToTmp(String zipResourcePath) throws IOException {

@@ -6,6 +6,7 @@ import com.tw.go.plugin.cmd.ProcessOutputStreamConsumer;
 import com.tw.go.plugin.model.GitConfig;
 import com.tw.go.plugin.model.ModifiedFile;
 import com.tw.go.plugin.model.Revision;
+import com.tw.go.plugin.util.StringUtil;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -18,6 +19,7 @@ import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.submodule.SubmoduleStatus;
 import org.eclipse.jgit.submodule.SubmoduleWalk;
+import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.FS;
@@ -229,18 +231,18 @@ public class JGitHelper extends GitHelper {
     }
 
     @Override
-    public Map<String, String> getBranchToRevisionMap() {
+    public Map<String, String> getBranchToRevisionMap(String pattern) {
         Repository repository = null;
         try {
             repository = getRepository(workingDir);
-            Git git = new Git(repository);
-            ListBranchCommand listBranch = git.branchList().setListMode(ListBranchCommand.ListMode.REMOTE);
-            List<Ref> refs = listBranch.call();
+            Map<String, Ref> allRefs = repository.getAllRefs();
             Map<String, String> branchToRevisionMap = new HashMap<String, String>();
-            for (Ref ref : refs) {
-                String branch = ref.getName().replace("refs/remotes/origin/", "");
-                String revision = ref.getObjectId().getName();
-                branchToRevisionMap.put(branch, revision);
+            for (String refName : allRefs.keySet()) {
+                if (refName.contains(pattern)) {
+                    String branch = refName.replace(pattern, "");
+                    String revision = allRefs.get(refName).getObjectId().getName();
+                    branchToRevisionMap.put(branch, revision);
+                }
             }
             return branchToRevisionMap;
         } catch (Exception e) {
@@ -257,12 +259,15 @@ public class JGitHelper extends GitHelper {
     }
 
     @Override
-    public void fetch() {
+    public void fetch(String refSpec) {
         Repository repository = null;
         try {
             repository = getRepository(workingDir);
             Git git = new Git(repository);
-            FetchCommand fetch = git.fetch();
+            FetchCommand fetch = git.fetch().setRemoveDeletedRefs(true);
+            if (!StringUtil.isEmpty(refSpec)) {
+                fetch.setRefSpecs(new RefSpec(refSpec));
+            }
             setCredentials(fetch);
             fetch.call();
         } catch (Exception e) {

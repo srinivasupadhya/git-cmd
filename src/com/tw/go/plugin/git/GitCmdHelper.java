@@ -9,6 +9,7 @@ import com.tw.go.plugin.model.GitConfig;
 import com.tw.go.plugin.model.Revision;
 import com.tw.go.plugin.util.DateUtils;
 import com.tw.go.plugin.util.ListUtil;
+import com.tw.go.plugin.util.StringUtil;
 import org.apache.commons.exec.*;
 import org.apache.commons.io.FileUtils;
 
@@ -107,16 +108,18 @@ public class GitCmdHelper extends GitHelper {
     }
 
     @Override
-    public Map<String, String> getBranchToRevisionMap() {
+    public Map<String, String> getBranchToRevisionMap(String pattern) {
         CommandLine gitCmd = Console.createCommand("show-ref");
         List<String> outputLines = runAndGetOutput(gitCmd, workingDir).stdOut();
         Map<String, String> branchToRevisionMap = new HashMap<String, String>();
         for (String line : outputLines) {
-            if (line.contains("refs/remotes/origin/") && !line.contains("refs/remotes/origin/HEAD")) {
+            if (line.contains(pattern)) {
                 String[] parts = line.split(" ");
-                String branch = parts[1].replace("refs/remotes/origin/", "");
+                String branch = parts[1].replace(pattern, "");
                 String revision = parts[0];
-                branchToRevisionMap.put(branch, revision);
+                if (!branch.equals("HEAD")) {
+                    branchToRevisionMap.put(branch, revision);
+                }
             }
         }
         return branchToRevisionMap;
@@ -184,9 +187,13 @@ public class GitCmdHelper extends GitHelper {
     }
 
     @Override
-    public void fetch() {
+    public void fetch(String refSpec) {
         stdOut.consumeLine("[GIT] Fetching changes");
-        CommandLine gitFetch = Console.createCommand("fetch", "origin");
+        List<String> args = new ArrayList<String>(Arrays.asList("fetch", "--prune", "origin"));
+        if (!StringUtil.isEmpty(refSpec)) {
+            args.add(refSpec);
+        }
+        CommandLine gitFetch = Console.createCommand(args.toArray(new String[args.size()]));
         runOrBomb(gitFetch);
     }
 

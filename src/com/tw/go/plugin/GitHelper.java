@@ -29,16 +29,16 @@ public abstract class GitHelper {
     public abstract void checkConnection();
 
     public void cloneOrFetch() {
+        cloneOrFetch(null);
+    }
+
+    public void cloneOrFetch(String refSpec) {
         if (!isGitRepository() || !isSameRepository()) {
             setupWorkingDir();
             cloneRepository();
-            resetHard("origin/" + gitConfig.getEffectiveBranch());
-            if (gitConfig.isRecursiveSubModuleUpdate()) {
-                updateSubmoduleWithInit();
-            }
-        } else {
-            fetchAndResetToHead();
         }
+
+        fetchAndResetToHead(refSpec);
     }
 
     private boolean isGitRepository() {
@@ -79,25 +79,25 @@ public abstract class GitHelper {
 
     public abstract Revision getDetailsForRevision(String sha);
 
-    public abstract Map<String, String> getBranchToRevisionMap();
+    public abstract Map<String, String> getBranchToRevisionMap(String pattern);
 
     public abstract void pull();
 
-    public abstract void fetch();
+    public abstract void fetch(String refSpec);
 
     public abstract void resetHard(String revision);
 
-    public void fetchAndResetToHead() {
-        fetchAndReset("origin/" + gitConfig.getEffectiveBranch());
+    public void fetchAndResetToHead(String refSpec) {
+        fetchAndReset("origin/" + gitConfig.getEffectiveBranch(), refSpec);
     }
 
-    public void fetchAndReset(String revision) {
+    public void fetchAndReset(String revision, String refSpec) {
         stdOut.consumeLine(String.format("[GIT] Fetch and reset in working directory %s", workingDir));
         cleanAllUnversionedFiles();
         if (isSubmoduleEnabled()) {
             removeSubmoduleSectionsFromGitConfig();
         }
-        fetch();
+        fetch(refSpec);
         gc();
         resetHard(revision);
         if (isSubmoduleEnabled()) {
