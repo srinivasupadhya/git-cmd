@@ -33,7 +33,7 @@ public class GitCmdHelper extends GitHelper {
 
     @Override
     public String version() {
-        CommandLine gitLsRemote = Console.createCommand("version");
+        CommandLine gitLsRemote = Console.createCommand("--version");
         return runAndGetOutput(gitLsRemote).stdOut().get(0);
     }
 
