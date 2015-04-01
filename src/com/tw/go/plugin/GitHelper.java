@@ -92,7 +92,7 @@ public abstract class GitHelper {
     public abstract void resetHard(String revision);
 
     public void fetchAndResetToHead(String refSpec) {
-        fetchAndReset("origin/" + gitConfig.getEffectiveBranch(), refSpec);
+        fetchAndReset("HEAD", refSpec);
     }
 
     public void fetchAndReset(String revision, String refSpec) {
