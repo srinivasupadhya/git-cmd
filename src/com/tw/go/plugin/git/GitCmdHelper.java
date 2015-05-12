@@ -189,7 +189,7 @@ public class GitCmdHelper extends GitHelper {
     @Override
     public void fetch(String refSpec) {
         stdOut.consumeLine("[GIT] Fetching changes");
-        List<String> args = new ArrayList<String>(Arrays.asList("fetch", "--prune", "origin"));
+        List<String> args = new ArrayList<String>(Arrays.asList("fetch", "origin"));
         if (!StringUtil.isEmpty(refSpec)) {
             args.add(refSpec);
         }
