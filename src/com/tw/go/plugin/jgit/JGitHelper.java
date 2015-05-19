@@ -56,7 +56,7 @@ public class JGitHelper extends GitHelper {
 
     @Override
     public void cloneRepository() {
-        CloneCommand clone = Git.cloneRepository().setURI(gitConfig.getUrl()).setDirectory(workingDir).setBranch(gitConfig.getEffectiveBranch());
+        CloneCommand clone = Git.cloneRepository().setURI(gitConfig.getUrl()).setBranch(gitConfig.getEffectiveBranch()).setDirectory(workingDir);
         if (gitConfig.isRecursiveSubModuleUpdate()) {
             clone.setCloneSubmodules(true);
         }
@@ -70,6 +70,19 @@ public class JGitHelper extends GitHelper {
 
     @Override
     public void checkoutRemoteBranchToLocal() {
+        Repository repository = null;
+        try {
+            repository = getRepository(workingDir);
+            Git git = new Git(repository);
+            CheckoutCommand checkout = git.checkout().setForce(true).setName(gitConfig.getEffectiveBranch());
+            checkout.call();
+        } catch (Exception e) {
+            throw new RuntimeException("checkout failed", e);
+        } finally {
+            if (repository != null) {
+                repository.close();
+            }
+        }
     }
 
     @Override
@@ -299,11 +312,12 @@ public class JGitHelper extends GitHelper {
     @Override
     public void cleanAllUnversionedFiles() {
         Repository repository = null;
+        SubmoduleWalk walk = null;
         try {
             repository = getRepository(workingDir);
             Git git = new Git(repository);
 
-            SubmoduleWalk walk = SubmoduleWalk.forIndex(repository);
+            walk = SubmoduleWalk.forIndex(repository);
             while (walk.next()) {
                 cleanSubmoduleOfAllUnversionedFiles(walk);
             }
@@ -313,6 +327,9 @@ public class JGitHelper extends GitHelper {
         } catch (Exception e) {
             throw new RuntimeException("clean failed", e);
         } finally {
+            if (walk != null) {
+                walk.release();
+            }
             if (repository != null) {
                 repository.close();
             }
@@ -401,16 +418,20 @@ public class JGitHelper extends GitHelper {
     @Override
     public void checkoutAllModifiedFilesInSubmodules() {
         Repository repository = null;
+        SubmoduleWalk walk = null;
         try {
             repository = getRepository(workingDir);
 
-            SubmoduleWalk walk = SubmoduleWalk.forIndex(repository);
+            walk = SubmoduleWalk.forIndex(repository);
             while (walk.next()) {
                 checkoutSubmodule(walk);
             }
         } catch (Exception e) {
             throw new RuntimeException("checkout all sub-modules failed", e);
         } finally {
+            if (walk != null) {
+                walk.release();
+            }
             if (repository != null) {
                 repository.close();
             }
@@ -421,7 +442,7 @@ public class JGitHelper extends GitHelper {
         Repository submoduleRepository = null;
         try {
             submoduleRepository = walk.getRepository();
-            CheckoutCommand checkout = Git.wrap(submoduleRepository).checkout();
+            CheckoutCommand checkout = Git.wrap(submoduleRepository).checkout().setForce(true).setName("HEAD");
             checkout.call();
         } catch (Exception e) {
             throw new RuntimeException("sub-module checkout failed", e);

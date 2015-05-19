@@ -198,6 +198,7 @@ public abstract class AbstractGitHelperTest {
         assertThat(submoduleFolders.get(0), is("sub-module"));
     }
 
+    @Ignore
     @Test
     public void shouldShallowClone() throws Exception {
         extractToTmp("/sample-repository/simple-git-repository-2.zip");

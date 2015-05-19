@@ -72,6 +72,10 @@ public class GitConfig {
         this.password = password;
     }
 
+    public String getRemoteBranch() {
+        return String.format("origin/%s", getEffectiveBranch());
+    }
+
     public String getEffectiveBranch() {
         return StringUtil.isEmpty(branch) ? "master" : branch;
     }

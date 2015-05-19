@@ -10,7 +10,7 @@ import com.tw.go.plugin.model.Revision;
 import com.tw.go.plugin.util.DateUtils;
 import com.tw.go.plugin.util.ListUtil;
 import com.tw.go.plugin.util.StringUtil;
-import org.apache.commons.exec.*;
+import org.apache.commons.exec.CommandLine;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -39,9 +39,7 @@ public class GitCmdHelper extends GitHelper {
 
     @Override
     public void checkConnection() {
-        List<String> args = new ArrayList<String>(Arrays.asList("ls-remote"));
-        args.add(gitConfig.getEffectiveUrl());
-        CommandLine gitCmd = Console.createCommand(ListUtil.toArray(args));
+        CommandLine gitCmd = Console.createCommand("ls-remote", gitConfig.getEffectiveUrl());
         runAndGetOutput(gitCmd);
     }
 
@@ -54,12 +52,12 @@ public class GitCmdHelper extends GitHelper {
         args.add(gitConfig.getEffectiveUrl());
         args.add(workingDir.getAbsolutePath());
         CommandLine gitClone = Console.createCommand(ListUtil.toArray(args));
-        Console.runOrBomb(gitClone, null, stdOut, stdErr);
+        runAndGetOutput(gitClone, null, stdOut, stdErr);
     }
 
     @Override
     public void checkoutRemoteBranchToLocal() {
-        CommandLine gitCmd = Console.createCommand("checkout", "-b", gitConfig.getEffectiveBranch(), "origin/" + gitConfig.getEffectiveBranch());
+        CommandLine gitCmd = Console.createCommand("checkout", "-f", gitConfig.getEffectiveBranch());
         runOrBomb(gitCmd);
     }
 
@@ -110,7 +108,7 @@ public class GitCmdHelper extends GitHelper {
     @Override
     public Map<String, String> getBranchToRevisionMap(String pattern) {
         CommandLine gitCmd = Console.createCommand("show-ref");
-        List<String> outputLines = runAndGetOutput(gitCmd, workingDir).stdOut();
+        List<String> outputLines = runAndGetOutput(gitCmd).stdOut();
         Map<String, String> branchToRevisionMap = new HashMap<String, String>();
         for (String line : outputLines) {
             if (line.contains(pattern)) {
@@ -193,7 +191,7 @@ public class GitCmdHelper extends GitHelper {
         if (!StringUtil.isEmpty(refSpec)) {
             args.add(refSpec);
         }
-        CommandLine gitFetch = Console.createCommand(args.toArray(new String[args.size()]));
+        CommandLine gitFetch = Console.createCommand(ListUtil.toArray(args));
         runOrBomb(gitFetch);
     }
 
@@ -217,7 +215,7 @@ public class GitCmdHelper extends GitHelper {
 
     private void cleanUnversionedFiles(File workingDir) {
         CommandLine gitClean = Console.createCommand("clean", "-dff");
-        Console.runOrBomb(gitClean, workingDir, stdOut, stdErr);
+        runAndGetOutput(gitClean, workingDir, stdOut, stdErr);
     }
 
     @Override
@@ -230,7 +228,12 @@ public class GitCmdHelper extends GitHelper {
     @Override
     public Map<String, String> submoduleUrls() {
         CommandLine gitConfig = Console.createCommand("config", "--get-regexp", "^submodule\\..+\\.url");
-        List<String> submoduleList = runAndGetOutput(gitConfig).stdOut();
+        List<String> submoduleList = new ArrayList<String>();
+        try {
+            submoduleList = runAndGetOutput(gitConfig).stdOut();
+        } catch (Exception e) {
+            // ignore
+        }
         Map<String, String> submoduleUrls = new HashMap<String, String>();
         for (String submoduleLine : submoduleList) {
             Matcher m = GIT_SUBMODULE_URL_PATTERN.matcher(submoduleLine);
@@ -378,15 +381,19 @@ public class GitCmdHelper extends GitHelper {
         runOrBomb(gitCommit);
     }
 
-    private ConsoleResult runOrBomb(CommandLine commandLine) {
-        return Console.runOrBomb(commandLine, workingDir, stdOut, stdErr);
+    private ConsoleResult runOrBomb(CommandLine gitCmd) {
+        return runAndGetOutput(gitCmd, workingDir, stdOut, stdErr);
     }
 
     private ConsoleResult runAndGetOutput(CommandLine gitCmd) {
-        return Console.runOrBomb(gitCmd, workingDir, new ProcessOutputStreamConsumer(new InMemoryConsumer()), new ProcessOutputStreamConsumer(new InMemoryConsumer()));
+        return runAndGetOutput(gitCmd, workingDir);
     }
 
     private ConsoleResult runAndGetOutput(CommandLine gitCmd, File workingDir) {
-        return Console.runOrBomb(gitCmd, workingDir, new ProcessOutputStreamConsumer(new InMemoryConsumer()), new ProcessOutputStreamConsumer(new InMemoryConsumer()));
+        return runAndGetOutput(gitCmd, workingDir, new ProcessOutputStreamConsumer(new InMemoryConsumer()), new ProcessOutputStreamConsumer(new InMemoryConsumer()));
+    }
+
+    private ConsoleResult runAndGetOutput(CommandLine gitCmd, File workingDir, ProcessOutputStreamConsumer stdOut, ProcessOutputStreamConsumer stdErr) {
+        return Console.runOrBomb(gitCmd, workingDir, stdOut, stdErr);
     }
 }
