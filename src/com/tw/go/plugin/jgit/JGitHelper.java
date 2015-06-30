@@ -328,7 +328,7 @@ public class JGitHelper extends GitHelper {
             throw new RuntimeException("clean failed", e);
         } finally {
             if (walk != null) {
-                walk.release();
+                walk.close();
             }
             if (repository != null) {
                 repository.close();
@@ -430,7 +430,7 @@ public class JGitHelper extends GitHelper {
             throw new RuntimeException("checkout all sub-modules failed", e);
         } finally {
             if (walk != null) {
-                walk.release();
+                walk.close();
             }
             if (repository != null) {
                 repository.close();
