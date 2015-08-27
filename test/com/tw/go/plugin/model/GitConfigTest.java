@@ -14,6 +14,15 @@ public class GitConfigTest {
         assertThat(new GitConfig("http://github.com/gocd/gocd", "username", "password", null).getEffectiveUrl(), is("http://username:password@github.com/gocd/gocd"));
         assertThat(new GitConfig("https://github.com/gocd/gocd", "username", "password", null).getEffectiveUrl(), is("https://username:password@github.com/gocd/gocd"));
     }
+    
+    @Test
+    public void shouldGetEffectiveMaskedUrl() throws Exception {
+        assertThat(new GitConfig("/tmp/git-repo", null, null, null).getEffectiveMaskedUrl(), is("/tmp/git-repo"));
+        assertThat(new GitConfig("/tmp/git-repo", "username", "password", null).getEffectiveMaskedUrl(), is("/tmp/git-repo"));
+        assertThat(new GitConfig("http://github.com/gocd/gocd", null, null, null).getEffectiveMaskedUrl(), is("http://github.com/gocd/gocd"));
+        assertThat(new GitConfig("http://github.com/gocd/gocd", "username", "password", null).getEffectiveMaskedUrl(), is("http://username:********@github.com/gocd/gocd"));
+        assertThat(new GitConfig("https://github.com/gocd/gocd", "username", "password", null).getEffectiveMaskedUrl(), is("https://username:********@github.com/gocd/gocd"));
+    }
 
     @Test
     public void shouldGetEffectiveBranch() throws Exception {
