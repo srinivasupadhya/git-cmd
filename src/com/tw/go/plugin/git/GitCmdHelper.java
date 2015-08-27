@@ -40,7 +40,8 @@ public class GitCmdHelper extends GitHelper {
     @Override
     public void checkConnection() {
         CommandLine gitCmd = Console.createCommand("ls-remote", gitConfig.getEffectiveUrl());
-        runAndGetOutput(gitCmd);
+        CommandLine gitCmdMasked = Console.createCommand("ls-remote", gitConfig.getEffectiveMaskedUrl());
+        runAndGetOutput(gitCmd, workingDir, gitCmdMasked.toString());
     }
 
     @Override
@@ -49,10 +50,14 @@ public class GitCmdHelper extends GitHelper {
         if (gitConfig.isShallowClone()) {
             args.add("--depth=1");
         }
+        List<String> maskedArgs = new ArrayList<String>(args);
         args.add(gitConfig.getEffectiveUrl());
+        maskedArgs.add(gitConfig.getEffectiveMaskedUrl());
         args.add(workingDir.getAbsolutePath());
+        maskedArgs.add(workingDir.getAbsolutePath());
         CommandLine gitClone = Console.createCommand(ListUtil.toArray(args));
-        runAndGetOutput(gitClone, null, stdOut, stdErr);
+        CommandLine gitCloneMasked = Console.createCommand(ListUtil.toArray(maskedArgs));
+        runAndGetOutput(gitClone, null, stdOut, stdErr, gitCloneMasked.toString());
     }
 
     @Override
@@ -388,12 +393,20 @@ public class GitCmdHelper extends GitHelper {
     private ConsoleResult runAndGetOutput(CommandLine gitCmd) {
         return runAndGetOutput(gitCmd, workingDir);
     }
+    
+    private ConsoleResult runAndGetOutput(CommandLine gitCmd, File workingDir, String prettyMessage) {
+        return runAndGetOutput(gitCmd, workingDir, new ProcessOutputStreamConsumer(new InMemoryConsumer()), new ProcessOutputStreamConsumer(new InMemoryConsumer()), prettyMessage);
+    }
 
     private ConsoleResult runAndGetOutput(CommandLine gitCmd, File workingDir) {
         return runAndGetOutput(gitCmd, workingDir, new ProcessOutputStreamConsumer(new InMemoryConsumer()), new ProcessOutputStreamConsumer(new InMemoryConsumer()));
     }
 
     private ConsoleResult runAndGetOutput(CommandLine gitCmd, File workingDir, ProcessOutputStreamConsumer stdOut, ProcessOutputStreamConsumer stdErr) {
-        return Console.runOrBomb(gitCmd, workingDir, stdOut, stdErr);
+        return runAndGetOutput(gitCmd, workingDir, stdOut, stdErr, gitCmd.toString());
+    }
+    
+    private ConsoleResult runAndGetOutput(CommandLine gitCmd, File workingDir, ProcessOutputStreamConsumer stdOut, ProcessOutputStreamConsumer stdErr, String prettyMessage) {
+        return Console.runOrBomb(gitCmd, workingDir, stdOut, stdErr, prettyMessage);
     }
 }
