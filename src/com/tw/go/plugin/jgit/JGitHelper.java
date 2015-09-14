@@ -318,9 +318,11 @@ public class JGitHelper extends GitHelper {
             Git git = new Git(repository);
 
             walk = SubmoduleWalk.forIndex(repository);
-            while (walk.next()) {
-                cleanSubmoduleOfAllUnversionedFiles(walk);
-            }
+	    if (walk != null) {
+            	while (walk.next()) {
+                	cleanSubmoduleOfAllUnversionedFiles(walk);
+            	}
+	    }
 
             CleanCommand clean = git.clean().setCleanDirectories(true);
             clean.call();
@@ -340,8 +342,10 @@ public class JGitHelper extends GitHelper {
         Repository submoduleRepository = null;
         try {
             submoduleRepository = walk.getRepository();
-            CleanCommand clean = Git.wrap(submoduleRepository).clean().setCleanDirectories(true);
-            clean.call();
+	    if (submoduleRepository != null) {
+            	CleanCommand clean = Git.wrap(submoduleRepository).clean().setCleanDirectories(true);
+            	clean.call();
+	    }
         } catch (Exception e) {
             throw new RuntimeException("sub-module clean failed", e);
         } finally {
