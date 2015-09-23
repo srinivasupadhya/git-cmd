@@ -10,7 +10,7 @@ import java.io.File;
 public class Console {
     public static CommandLine createCommand(String... args) {
         CommandLine gitCmd = new CommandLine("git");
-        gitCmd.addArguments(args);
+        gitCmd.addArguments(args, false);
         return gitCmd;
     }
 
