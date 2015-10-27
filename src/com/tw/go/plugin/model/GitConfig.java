@@ -3,6 +3,8 @@ package com.tw.go.plugin.model;
 import com.tw.go.plugin.util.StringUtil;
 
 public class GitConfig {
+    private static final String MASKED_PASSWORD = "*****";
+    
     private String url;
     private String username;
     private String password;
@@ -42,10 +44,25 @@ public class GitConfig {
         }
         return getUrl();
     }
+    
+    public String getEffectiveMaskedUrl() {
+        if (isRemoteUrl() && hasCredentials()) {
+            return getUrlWithMaskedCredentials();
+        }
+        return getUrl();
+    }
+    
+    private String getUrlWithCredentials(String user, String pass) {
+        String[] parts = url.split("://");
+        return String.format("%s://%s:%s@%s", parts[0], user, pass, parts[1]);
+    }
 
     public String getUrlWithCredentials() {
-        String[] parts = url.split("://");
-        return String.format("%s://%s:%s@%s", parts[0], username, password, parts[1]);
+        return getUrlWithCredentials(username, password);
+    }
+    
+    public String getUrlWithMaskedCredentials() {
+        return getUrlWithCredentials(username, MASKED_PASSWORD);
     }
 
     public String getUrl() {
